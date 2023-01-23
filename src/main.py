@@ -54,7 +54,7 @@ def main(
 
                 page_name = last_part
 
-            with open(save_path / page_name, "xb") as html_fd:
+            with open(save_path / page_name, "wb") as html_fd:
                 html_fd.write(result.raw_data)
 
             last_fetch: Optional[datetime] = db.update_last_fetch(result.url)
@@ -120,6 +120,8 @@ if __name__ == "__main__":
         for line in sys.stdin:
             urls.extend(line.split())
 
+    init_app()
+
     # Tell Python to run the handler() function when SIGINT is recieved
     # signal(SIGINT, handler)
-    sys.exit(main(urls, args.verbose))
+    sys.exit(main(urls, args.output_path, args.metadata, args.verbose))
