@@ -11,15 +11,19 @@ from typing import Optional
 from ko_gekko.bin.fetch_database import FetchDatabase
 from ko_gekko.common.nest import Nest
 
-KOGEKKO_DATA_ROOT = platformdirs.user_data_path("kogekko", "jazzinghen", roaming=True)
-KOGEKKO_LOG_FOLDER = KOGEKKO_DATA_ROOT / "logs"
-
 logger.add(sys.stderr, format="{time} {level} {message}", level="WARNING")
+
+KOGEKKO_DATA_ROOT: Path = platformdirs.user_data_path(
+    "ko_gekko", "jazzinghen", roaming=True
+)
+KOGEKKO_LOG_ROOT: Path = (
+    platformdirs.user_state_path("ko_gekko", "jazzinghen", roaming=True) / "logs"
+)
 
 
 def init_app():
     KOGEKKO_DATA_ROOT.mkdir(parents=True, exist_ok=True)
-    KOGEKKO_LOG_FOLDER.mkdir(parents=True, exist_ok=True)
+    KOGEKKO_LOG_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 @logger.catch
@@ -33,6 +37,14 @@ def main(
         logger.add(sys.stdout, format="{time} {level} {message}", level="DEBUG")
     else:
         logger.add(sys.stdout, format="{time} {level} {message}", level="SUCCESS")
+
+    logger.add(
+        KOGEKKO_LOG_ROOT / "ko_gekko.log",
+        format="{time} {level} {message}",
+        level="DEBUG",
+        rotation="5 MB",
+        compression="zip",
+    )
 
     with FetchDatabase(KOGEKKO_DATA_ROOT) as db, Nest(None) as nest:
         (retrieve_results, failed) = nest.retrieve_pages(urls)
@@ -93,7 +105,7 @@ if __name__ == "__main__":
         "--output-path",
         metavar="PATH",
         type=Path,
-        default=os.getcwd(),
+        default=Path(os.getcwd(), "downloads"),
         help="where to save the pages.",
     )
     cli_parser.add_argument(

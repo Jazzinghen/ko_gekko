@@ -16,8 +16,14 @@ class FetchDatabase:
             page_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             page_url TEXT UNIQUE NOT NULL,
             last_timestamp INTEGER NOT NULL
-        ) STRICT;
+        )
         """
+
+        sql_version = sqlite3.sqlite_version.split(".")
+        if int(sql_version[0]) >= 3 and int(sql_version[1]) >= 37:
+            nest_table_query += " STRICT"
+
+        nest_table_query += ";"
 
         with self.database_connection:
             self.database_connection.execute(nest_table_query)
