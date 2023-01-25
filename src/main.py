@@ -7,11 +7,17 @@ from pathlib import Path
 import argparse
 from urllib.parse import urlsplit
 from typing import Optional
+import pywebcopy
 
 from ko_gekko.bin.fetch_database import FetchDatabase
 from ko_gekko.common.nest import Nest
 
 logger.add(sys.stderr, format="{time} {level} {message}", level="WARNING")
+
+if not sys.warnoptions:
+    import warnings
+
+    warnings.simplefilter("ignore")
 
 KOGEKKO_DATA_ROOT: Path = platformdirs.user_data_path(
     "ko_gekko", "jazzinghen", roaming=True
@@ -31,6 +37,7 @@ def main(
     urls: list[str],
     out_path: Path,
     metadata_needed: bool = False,
+    save_local: bool = False,
     verbose: bool = False,
 ) -> int:
     if verbose:
@@ -80,6 +87,19 @@ def main(
                     last_fetch_pretty = last_fetch.strftime("%A %Y-%m-%d %H:%M%Z")
                     print(f"\tLast fetch: {last_fetch_pretty}")
 
+            if save_local:
+                local_copy_path = save_path / "local"
+                pywebcopy.save_webpage(
+                    url=result.url,
+                    project_folder=str(local_copy_path),
+                    project_name=url_data.netloc,
+                    bypass_robots=True,
+                    debug=False,
+                    open_in_browser=False,
+                    delay=None,
+                    threaded=True,
+                )
+
         if failed:
             print("The following urls failed:")
             for url in failed:
@@ -109,6 +129,12 @@ if __name__ == "__main__":
         help="where to save the pages.",
     )
     cli_parser.add_argument(
+        "-l",
+        "--local",
+        action="store_true",
+        help="saves pages for offline view (PyWebCopy interface)",
+    )
+    cli_parser.add_argument(
         "-m",
         "--metadata",
         action="store_true",
@@ -136,4 +162,4 @@ if __name__ == "__main__":
 
     # Tell Python to run the handler() function when SIGINT is recieved
     # signal(SIGINT, handler)
-    sys.exit(main(urls, args.output_path, args.metadata, args.verbose))
+    sys.exit(main(urls, args.output_path, args.metadata, args.local, args.verbose))
