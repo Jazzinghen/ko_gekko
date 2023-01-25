@@ -1,0 +1,22 @@
+services:
+  ko_gekko:
+    build:
+      context: .
+    image: ko_gekko
+    tty: true
+    volumes:
+      - type: volume
+        source: ko_gekko_db
+        target: /root/.local/share/ko_gekko
+      - type: volume
+        source: ko_gekko_logs
+        target: /root/.local/state/ko_gekko
+      - type: bind
+        source: ${KOGEKKO_DOWNLOADS:-./ko_gekko_downloads}
+        target: /opt/ko_gekko/downloads
+        bind:
+          create_host_path: true
+
+volumes:
+  ko_gekko_db:
+  ko_gekko_logs:

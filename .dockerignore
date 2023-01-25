@@ -1,0 +1,8 @@
+# Work with a whitelist instead of blacklist
+*
+
+# Application
+!src/*
+
+# Pipenv data
+!Pipfile
