@@ -1,29 +1,66 @@
-"""
-nest.py:
-Entrypoint class of the Kogekko library, handles multiple crawlers
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
+"""KoGekko Nest class.
+
+This module handles multithreaded web crawlers for multi page retrieval
 """
 
 import concurrent.futures as futures
 from ko_gekko.common.crawler import Crawler
-from ko_gekko.common.error import KoGekkoBackendError
+from ko_gekko.common.error import KoGekkoBackendError, KoGekkoRemoteError
+from loguru import logger
 from requests import HTTPError
 from requests_html import HTMLResponse
 from typing import Optional, NamedTuple
-from loguru import logger
+
+logger.disable("ko_gekko")
 
 
 class RetrievalResult(NamedTuple):
+    """Retrieval result structure
+
+    Attributes
+    ----------
+    url : str
+        URL of the requested PAGE
+    raw_data : bytes
+        Raw HTML data of the requested page
+    links : int
+        Amount of links in the requested page
+    images: int
+        Amount of images in the requested page
+
+    """
+
     url: str
     raw_data: bytes
     links: int
     images: int
 
 
-logger.disable("ko_gekko")
-
-
 class Nest:
+    """Concurrent page crawlers handler
+
+    Attributes
+    ----------
+    crawler_pool : concurrent.futures.ThreadPoolExecutor
+        Thread pool handling concurrent page retrieval
+
+    """
+
     def __init__(self, max_threads: Optional[int]):
+        """Nest initialization
+
+        Parameters
+        ----------
+        max_threads : int, optional
+            Maximum amount of concurrent threads to use when retrieving multiple pages
+
+        Raises
+        ------
+        KoGekkoBackendError
+            If the thread pool was not correctly initialized.
+        """
         try:
             self.crawler_pool: futures.ThreadPoolExecutor = futures.ThreadPoolExecutor(
                 max_workers=max_threads
@@ -47,6 +84,27 @@ class Nest:
     def retrieve_pages(
         self, urls: list[str]
     ) -> tuple[list[RetrievalResult], list[str]]:
+        """Retrieve multiple pages and parse their contents for metadata retrieval
+
+        Parameters
+        ----------
+        urls : list of str
+            URL of the pages to retrieve
+
+        Returns
+        -------
+        tuple of list of RetrievalResult and list of str
+            A tuple containing a list the results of page retieval and a list of URLs
+            that encountered issues during retrieval
+
+        Raises
+        ------
+        KoGekkoBackendError
+            If there has been an issue with thread results retrieval
+
+        KoGekkoRemoteError
+            If there has been an unexpected type of error while retrieving a page
+        """
         result: list[RetrievalResult] = []
         failed_urls: list[str] = []
         crawler_futures: dict[futures.Future, str] = {}
@@ -85,10 +143,10 @@ class Nest:
                     logger.warning(
                         f"Site returned the following HTTP error: {err.strerror}"
                     )
-                except Exception as err:
                     failed_urls.append(url)
+                except Exception as err:
                     logger.error(f"Encountered error while retrieving {url}: {err}")
-                    raise
+                    raise KoGekkoRemoteError from err
 
         except futures.TimeoutError as err:
             logger.error(
