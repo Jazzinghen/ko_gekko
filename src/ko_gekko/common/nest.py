@@ -38,6 +38,7 @@ class RetrievalResult(NamedTuple):
     images: int
 
 
+@logger.catch
 class Nest:
     """Concurrent page crawlers handler
 

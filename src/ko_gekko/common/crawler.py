@@ -9,6 +9,7 @@ from loguru import logger
 import requests_html
 
 
+@logger.catch
 class Crawler:
     """Page Crawler
 
