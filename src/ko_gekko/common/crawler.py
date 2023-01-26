@@ -15,6 +15,7 @@ class Crawler:
         logger.debug(f"Creating new HTML Session to download {self.url}")
         session: requests_html.HTMLSession = requests_html.HTMLSession()
         response: requests_html.HTMLResponse = session.get(self.url)
+        response.raise_for_status()
 
         logger.debug(f"Retrieved page {response.url}")
         link_qty: int = len(response.html.links)
