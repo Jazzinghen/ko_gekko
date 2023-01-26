@@ -39,6 +39,12 @@ simplify the user experience:
     $ ./ko_gekko.sh -h
 ```
 
+If docker is run on Windows, it's enough to run the container directly as there are no issues with permissions:
+
+```powershell
+    $ docker compose run --rm ko_gekko pipenv run python src/main.py -h
+```
+
 The image uses two permanent volumes to keep logs and the database of last timestamp of website fetch, plus
 one bind for runtime data sharing between container and host.
 
